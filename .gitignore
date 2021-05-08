@@ -1,0 +1,4 @@
+build/
+core_tmp/
+*.bin
+*.hex
