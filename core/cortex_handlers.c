@@ -132,6 +132,7 @@ __attribute__ ((section(".isr_vector"))) const DeviceVectors exception_table =
 };
 
 extern int main(void);
+void __libc_init_array(void);
 
 /* This is called on processor reset to initialize the device and call main() */
 void Reset_Handler(void)
