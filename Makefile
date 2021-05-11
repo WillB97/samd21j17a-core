@@ -32,7 +32,7 @@ MODULE_PATH?=$(abspath $(CURDIR)/thirdparty)
 CORE_PATH?=core
 BUILD_PATH?=$(abspath $(CURDIR)/build)
 
-NAME?=main
+NAME?=main.cpp
 
 # -----------------------------------------------------------------------------
 # Tools
@@ -44,10 +44,11 @@ SIZE=$(ARM_GCC_PATH)size
 
 # -----------------------------------------------------------------------------
 # Compiler options
-CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__ -DARDUINO=10813 -DARDUINO_SAMD_ZERO -DARDUINO_ARCH_SAMD -DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='Arduino LLC' -DUSB_PRODUCT='Arduino Zero'
-CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections -fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
+CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__ -DARDUINO=10813 -DARDUINO_SAMD_ZERO -DARDUINO_ARCH_SAMD
+CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='Arduino LLC' -DUSB_PRODUCT='Arduino Zero'
+CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections
+CXXFLAGS+=-fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
 CFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu11 -ffunction-sections -fdata-sections -nostdlib --param max-inline-insns-single=500 -MMD
-
 
 ELF=$(NAME).elf
 BIN=$(NAME).bin
@@ -68,7 +69,7 @@ SOURCES= \
   $(CORE_PATH)/delay.c \
   $(CORE_PATH)/startup.c \
   $(CORE_PATH)/Reset.cpp \
-  $(NAME).cpp
+  $(NAME)
 
 OBJECTS=$(addprefix $(BUILD_PATH)/, $(patsubst %.cpp,%.o,$(SOURCES:.c=.o)))
 DEPS=$(addprefix $(BUILD_PATH)/, $(SOURCES:.c=.d))
@@ -124,9 +125,6 @@ clean:
 	@echo Cleaning project
 	-$(RM) $(BIN)
 	-$(RM) $(HEX)
-	-$(RM) $(BUILD_PATH)/$(CORE_PATH)/*.*
-	-rmdir $(BUILD_PATH)/$(CORE_PATH)
-	-$(RM) $(BUILD_PATH)/*.*
-	-rmdir $(BUILD_PATH)
+	-$(RM) -r $(BUILD_PATH)
 
 .phony: print_info $(BUILD_PATH)
