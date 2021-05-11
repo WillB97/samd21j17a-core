@@ -33,6 +33,7 @@ CORE_PATH?=core
 BUILD_PATH?=$(abspath $(CURDIR)/build)
 
 NAME?=main.cpp
+_NAME?=$(basename $(NAME))
 
 # -----------------------------------------------------------------------------
 # Tools
@@ -44,15 +45,15 @@ SIZE=$(ARM_GCC_PATH)size
 
 # -----------------------------------------------------------------------------
 # Compiler options
-CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__ -DARDUINO=10813 -DARDUINO_SAMD_ZERO -DARDUINO_ARCH_SAMD
+CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__
 CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='Arduino LLC' -DUSB_PRODUCT='Arduino Zero'
 CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections
 CXXFLAGS+=-fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
 CFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu11 -ffunction-sections -fdata-sections -nostdlib --param max-inline-insns-single=500 -MMD
 
-ELF=$(NAME).elf
-BIN=$(NAME).bin
-HEX=$(NAME).hex
+ELF=$(_NAME).elf
+BIN=$(_NAME).bin
+HEX=$(_NAME).hex
 
 INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(CORE_PATH)"
 
@@ -81,8 +82,8 @@ all: print_info $(SOURCES) $(BIN) $(HEX)
 $(ELF): Makefile $(BUILD_PATH) $(OBJECTS)
 	@echo ----------------------------------------------------------
 	@echo Creating ELF binary
-	"$(CXX)" -L. -L$(BUILD_PATH) $(LDFLAGS) -Os -Wl,--gc-sections -save-temps -T$(LD_SCRIPT) -Wl,-Map,"$(BUILD_PATH)/$(NAME).map" -o "$(BUILD_PATH)/$(ELF)" -Wl,--start-group $(OBJECTS) -lm -Wl,--end-group
-	"$(NM)" "$(BUILD_PATH)/$(ELF)" >"$(BUILD_PATH)/$(NAME)_symbols.txt"
+	"$(CXX)" -L. -L$(BUILD_PATH) $(LDFLAGS) -Os -Wl,--gc-sections -save-temps -T$(LD_SCRIPT) -Wl,-Map,"$(BUILD_PATH)/$(_NAME).map" -o "$(BUILD_PATH)/$(ELF)" -Wl,--start-group $(OBJECTS) -lm -Wl,--end-group
+	"$(NM)" "$(BUILD_PATH)/$(ELF)" >"$(BUILD_PATH)/$(_NAME)_symbols.txt"
 	"$(SIZE)" --format=sysv -t -x $(BUILD_PATH)/$(ELF)
 
 $(BIN): $(ELF)
