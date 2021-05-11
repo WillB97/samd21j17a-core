@@ -18,10 +18,6 @@ extern "C" {
 
 #define abs(x) ((x)>0?(x):-(x))
 
-// I/O Ports definitions
-#define PORTA     (0ul)
-#define PORTB     (1ul)
-
 // init_clocks.c
 void init( void );
 void initSercom( void );
