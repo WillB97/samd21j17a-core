@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include <samd.h>
+#include "usb.h"
 
 #define _BV(x) (uint32_t)(1<<x)
 

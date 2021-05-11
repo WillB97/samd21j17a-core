@@ -29,6 +29,7 @@ else
 endif
 
 MODULE_PATH?=$(abspath $(CURDIR)/thirdparty)
+USB_PATH?=$(shell realpath --relative-to $(CURDIR) $(MODULE_PATH)/usb)
 CORE_PATH?=core
 BUILD_PATH?=$(abspath $(CURDIR)/build)
 
@@ -46,7 +47,7 @@ SIZE=$(ARM_GCC_PATH)size
 # -----------------------------------------------------------------------------
 # Compiler options
 CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__
-CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='Arduino LLC' -DUSB_PRODUCT='Arduino Zero'
+CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='"Arduino LLC"' -DUSB_PRODUCT='"Arduino Zero"'
 CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections
 CXXFLAGS+=-fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
 CFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu11 -ffunction-sections -fdata-sections -nostdlib --param max-inline-insns-single=500 -MMD
@@ -55,7 +56,7 @@ ELF=$(_NAME).elf
 BIN=$(_NAME).bin
 HEX=$(_NAME).hex
 
-INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(CORE_PATH)"
+INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(USB_PATH)" -I"$(CORE_PATH)"
 
 # -----------------------------------------------------------------------------
 # Linker options
@@ -70,6 +71,9 @@ SOURCES= \
   $(CORE_PATH)/delay.c \
   $(CORE_PATH)/startup.c \
   $(CORE_PATH)/Reset.cpp \
+  $(CORE_PATH)/USB-CDC.c \
+  $(USB_PATH)/samd/usb_samd.c \
+  $(USB_PATH)/usb_requests.c \
   $(NAME)
 
 OBJECTS=$(addprefix $(BUILD_PATH)/, $(patsubst %.cpp,%.o,$(SOURCES:.c=.o)))
@@ -111,8 +115,8 @@ $(BUILD_PATH)/%.o: %.cpp
 $(BUILD_PATH):
 	@echo ----------------------------------------------------------
 	@echo Creating build folder
-	-mkdir $(BUILD_PATH)
-	-mkdir $(BUILD_PATH)/$(CORE_PATH)
+	-mkdir -p $(BUILD_PATH) $(BUILD_PATH)/$(CORE_PATH)
+	-mkdir -p $(BUILD_PATH)/$(USB_PATH)/samd
 
 print_info:
 	@echo ----------------------------------------------------------
