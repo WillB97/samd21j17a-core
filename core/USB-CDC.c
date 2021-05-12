@@ -1,6 +1,4 @@
 #include "USB-CDC.h"
-#include "Reset.h"
-
 
 USB_ENDPOINTS(3);
 
@@ -268,6 +266,17 @@ void usb_cb_completion(void) {
 /// Callback for a SET_INTERFACE request
 bool usb_cb_set_interface(uint16_t interface, uint16_t new_altsetting) {
     return false;
+}
+
+// Reset over serial support
+void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState) {
+  // auto-reset into the bootloader is triggered when the port, already open at 1200 bps, is closed.
+  // We check DTR state to determine if host port is open.
+  if (dataRate == 1200 && (ctrlLineState & CDC_LINESTATE_DTR_MASK) == 0) {
+    initiateReset(250);
+  } else {
+    cancelReset();
+  }
 }
 
 // ------------------------------------------------------------------------------------------------------------------

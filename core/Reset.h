@@ -26,9 +26,6 @@ void initiateReset(int ms);
 void tickReset();
 void cancelReset();
 
-#include "USB-CDC.h"
-void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState);
-
  __attribute__ ((weak)) void resetExternalChip() {};
 
 #ifdef __cplusplus

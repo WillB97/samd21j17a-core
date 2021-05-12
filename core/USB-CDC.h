@@ -10,6 +10,7 @@ extern "C" {
 #include "usb.h"
 #include "samd/usb_samd.h"
 #include "class/cdc/cdc_standard.h"
+#include "Reset.h"
 
 #define ACM_SUPPORT_LINE_CODING 0x02
 #define ACM_SUPPORT_LINE_BREAK  0x04
@@ -27,6 +28,8 @@ extern "C" {
 #ifndef min
 #define min(x,y) ((x<y)?(x):(y))
 #endif // abs
+
+void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState);
 
 #ifdef __cplusplus
 }
