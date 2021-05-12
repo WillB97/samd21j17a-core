@@ -1,26 +1,13 @@
-#include "usb.h"
-#include "samd/usb_samd.h"
-#include "class/cdc/cdc_standard.h"
+#include "USB-CDC.h"
 #include "Reset.h"
 
 
 USB_ENDPOINTS(3);
 
-#define INTERFACE_CDC_CONTROL 0
-#define INTERFACE_CDC_DATA 1
-
-#define USB_EP_CDC_NOTIFICATION 0x81
-#define USB_EP_CDC_IN           0x82
-#define USB_EP_CDC_OUT          0x02
-
 // USB serial function prototypes
 void usbserial_init();
 void usbserial_in_completion();
 void usbserial_out_completion();
-
-#ifndef min
-#define min(x,y) ((x<y)?(x):(y))
-#endif // abs
 
 USB_ALIGN const USB_DeviceDescriptor device_descriptor = {
     .bLength = sizeof(USB_DeviceDescriptor),
@@ -42,7 +29,6 @@ USB_ALIGN const USB_DeviceDescriptor device_descriptor = {
 
     .bNumConfigurations     = 1
 };
-
 
 typedef struct ConfigDesc {  // struct to hold config below
     USB_ConfigurationDescriptor Config;
