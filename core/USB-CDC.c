@@ -4,8 +4,20 @@ USB_ENDPOINTS(3);
 
 // USB serial function prototypes
 void usbserial_init();
-void usbserial_in_completion();
-void usbserial_out_completion();
+void usbserial_run_tx_callback(uint8_t len);
+void usbserial_run_rx_callback(uint8_t len);
+
+// USB serial callbacks
+// tx_len, new_len -> new_buffer, set new_buffer to NULL to skip next transfer
+static uint8_t* (*usbserial_tx_callback)(uint8_t, uint8_t*) = NULL;
+// buffer, len, new_len -> new_buffer, set new_buffer to NULL to skip next transfer
+static uint8_t* (*usbserial_rx_callback)(uint8_t*, uint8_t, uint8_t*) = NULL;
+
+static uint8_t* usbserial_current_tx_buffer = NULL;
+static uint8_t* usbserial_current_rx_buffer = NULL;
+
+static uint8_t usbserial_current_tx_length = 0;
+
 
 USB_ALIGN const USB_DeviceDescriptor device_descriptor = {
     .bLength = sizeof(USB_DeviceDescriptor),
@@ -251,15 +263,16 @@ void usb_cb_completion(void) {
     if (usb_ep_pending(USB_EP_CDC_OUT)) {
         // if a host to device serial transmission was pending
         // run the callback and mark it as completed
-        usbserial_out_completion();
         usb_ep_handled(USB_EP_CDC_OUT);
+        uint8_t len = (uint8_t)(usb_ep_out_length(USB_EP_CDC_OUT) & 0xFF);
+        usbserial_run_rx_callback(len);
     }
 
     if (usb_ep_pending(USB_EP_CDC_IN)) {
         // if a device to host serial transmission was pending,
         // run the callback and mark it as completed
-        usbserial_in_completion();
         usb_ep_handled(USB_EP_CDC_IN);
+        usbserial_run_tx_callback(usbserial_current_tx_length);
     }
 }
 
@@ -284,20 +297,55 @@ void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState) {
 // ------------------------------------------------------------------------------------------------------------------
 /// TODO: Add callback configuration to link this to a USBSerial C++ class
 
-void usbserial_init() { // called by the SET_CONFIGURATION callback
+// called by the SET_CONFIGURATION callback when the CDC configuration is selected
+void usbserial_init() {
     // configure the USB endpoints
     usb_enable_ep(USB_EP_CDC_NOTIFICATION, USB_EP_TYPE_INTERRUPT, 8);
     usb_enable_ep(USB_EP_CDC_OUT, USB_EP_TYPE_BULK, 64);
     usb_enable_ep(USB_EP_CDC_IN, USB_EP_TYPE_BULK, 64);
+
+    // if callbacks configured, run them
+    usbserial_run_tx_callback(0);
+    usbserial_run_rx_callback(0);
 }
 
-// Callback, called when a USB host to device transfer completes
-void usbserial_out_completion() {
-    // uint32_t len = usb_ep_out_length(USB_EP_CDC_OUT);
+// Configure callbacks for USB serial
+void usbserial_set_tx_callback(uint8_t* (*new_tx_isr)(uint8_t, uint8_t*)) {
+    usbserial_tx_callback = new_tx_isr;
+    if (usb_ep_ready(USB_EP_CDC_IN)) { // if endpoint active
+        usbserial_run_tx_callback(0);
+    }
+}
+void usbserial_set_rx_callback(uint8_t* (*new_rx_isr)(uint8_t*, uint8_t, uint8_t*)) {
+    usbserial_rx_callback = new_rx_isr;
+    if (usb_ep_ready(USB_EP_CDC_IN)) { // if endpoint active
+        usbserial_run_rx_callback(0);
+    }
 }
 
-// Callback, called when a USB device to host transfer completes
-void usbserial_in_completion() {
+void usbserial_run_tx_callback(uint8_t len){
+    if (usbserial_tx_callback) {
+        uint8_t* buffer = usbserial_tx_callback(len, &usbserial_current_tx_length);
+        usbserial_current_tx_buffer = buffer;
+        if (buffer) {
+            usb_ep_start_in(USB_EP_CDC_IN, buffer, usbserial_current_tx_length, false); // start a tx transfer
+        }
+    } else {
+        usbserial_current_tx_buffer = NULL;
+        usbserial_current_tx_length = 0;
+    }
+}
+void usbserial_run_rx_callback(uint8_t len){
+    if (usbserial_rx_callback) {
+        uint8_t new_len;
+        uint8_t* buffer = usbserial_rx_callback(usbserial_current_rx_buffer, len, &new_len);
+        usbserial_current_rx_buffer = buffer;
+        if (buffer) {
+            usb_ep_start_out(USB_EP_CDC_OUT, buffer, new_len); // start a rx transfer
+        }
+    } else {
+        usbserial_current_rx_buffer = NULL;
+    }
 }
 
 // un-configure the USB endpoints

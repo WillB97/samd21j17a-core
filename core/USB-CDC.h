@@ -32,6 +32,9 @@ extern "C" {
 
 void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState);
 
+void usbserial_set_tx_callback(uint8_t* (*new_tx_isr)(uint8_t, uint8_t*));
+void usbserial_set_rx_callback(uint8_t* (*new_rx_isr)(uint8_t*, uint8_t, uint8_t*));
+
 #ifdef __cplusplus
 }
 #endif
