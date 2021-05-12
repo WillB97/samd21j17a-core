@@ -12,6 +12,7 @@ extern "C" {
 #include "class/cdc/cdc_standard.h"
 #include "Reset.h"
 
+// https://cscott.net/usb_dev/data/devclass/usbcdc11.pdf
 #define ACM_SUPPORT_LINE_CODING 0x02
 #define ACM_SUPPORT_LINE_BREAK  0x04
 
