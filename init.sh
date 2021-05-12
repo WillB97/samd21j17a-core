@@ -10,4 +10,8 @@ if [ ! -d CMSIS-Atmel ]; then
     wget https://github.com/adafruit/ArduinoModule-CMSIS-Atmel/releases/download/v1.2.1/CMSIS-Atmel-1.2.1.tar.bz2 -O - | tar -xj
 fi
 
+if [ ! -d usb ]; then
+    git clone https://github.com/WillB97/usb.git
+fi
+
 cd ..
