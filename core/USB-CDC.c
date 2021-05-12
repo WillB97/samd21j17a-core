@@ -311,6 +311,7 @@ void usbserial_out_completion() {
     usb_ep_start_in(USB_EP_CDC_IN, usbserial_buf[usbserial_active_rx_buf], len, false);
     usbserial_active_tx_buf = usbserial_active_rx_buf;
     usbserial_active_rx_buf = (usbserial_active_rx_buf + 1) % 4;
+    usb_ep_start_out(USB_EP_CDC_OUT, usbserial_buf[usbserial_active_rx_buf], 64);
 }
 
 // Callback, called when a USB device to host transfer completes
