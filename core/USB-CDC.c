@@ -145,7 +145,8 @@ USB_ALIGN const USB_StringDescriptor language_string = {
 };
 
 USB_ALIGN CDC_LineEncoding _usbLineInfo = {115200,0,0,8};
-USB_ALIGN uint8_t _usbCtrlLineInfo = 0x03;
+bool _usbPendingNewLineInfo = false;
+USB_ALIGN uint8_t _usbCtrlLineInfo = 0x00;
 
 /// Callback for a GET_DESCRIPTOR request
 uint16_t usb_cb_get_descriptor(uint8_t type, uint8_t index, const uint8_t** ptr) {
@@ -217,13 +218,8 @@ void usb_cb_control_setup(void) {
 
                     case CDC_SET_LINE_ENCODING: {
                         if (usb_setup.wLength) {
-                            memcpy(
-                                (uint8_t*)&_usbLineInfo,
-                                ep0_buf_out+sizeof(USB_SetupPacket),
-                                min(usb_setup.wLength, 7)
-                            );
+                            _usbPendingNewLineInfo = true;
                         }
-                        detectSerialReset(_usbLineInfo.baud_rate, _usbCtrlLineInfo);
                         usb_ep0_in(0);
                         return usb_ep0_out();
                     }
@@ -258,6 +254,12 @@ void usb_cb_control_in_completion(void) {
 
 /// Callback on a completion interrupt
 void usb_cb_control_out_completion(void) {
+    if (_usbPendingNewLineInfo) {
+        uint32_t len = usb_ep_out_length(0x00);
+        memcpy((uint8_t*)&_usbLineInfo, ep0_buf_out, min(len, sizeof(_usbLineInfo)));
+        detectSerialReset(_usbLineInfo.baud_rate, _usbCtrlLineInfo);
+        _usbPendingNewLineInfo = false;
+    }
 }
 
 /// Callback on a completion interrupt
