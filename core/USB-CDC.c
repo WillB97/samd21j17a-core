@@ -295,7 +295,14 @@ void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState) {
 // ------------------------------------------------------------------------------------------------------------------
 // #### USB serial ####
 // ------------------------------------------------------------------------------------------------------------------
-/// TODO: Add callback configuration to link this to a USBSerial C++ class
+
+#define USB_SERIAL_ECHO
+#ifdef USB_SERIAL_ECHO
+uint8_t* usbserial_out_completion(uint8_t* buffer, uint8_t len, uint8_t* new_len);
+
+uint8_t usbserial_active_tx_buf = 0;
+USB_ALIGN uint8_t usbserial_buf[4][64];
+#endif
 
 // called by the SET_CONFIGURATION callback when the CDC configuration is selected
 void usbserial_init() {
@@ -303,6 +310,10 @@ void usbserial_init() {
     usb_enable_ep(USB_EP_CDC_NOTIFICATION, USB_EP_TYPE_INTERRUPT, 8);
     usb_enable_ep(USB_EP_CDC_OUT, USB_EP_TYPE_BULK, 64);
     usb_enable_ep(USB_EP_CDC_IN, USB_EP_TYPE_BULK, 64);
+
+#ifdef USB_SERIAL_ECHO
+    usbserial_set_rx_callback(usbserial_out_completion);
+#endif
 
     // if callbacks configured, run them
     usbserial_run_tx_callback(0);
@@ -354,3 +365,27 @@ void usbserial_disable() {
     usb_disable_ep(USB_EP_CDC_OUT);
     usb_disable_ep(USB_EP_CDC_IN);
 }
+
+#ifdef USB_SERIAL_ECHO
+uint8_t* usbserial_out_completion(uint8_t* buffer, uint8_t len, uint8_t* new_len) {
+    if (len == 0) {
+        // nothing received so re-use the buffer
+        *new_len = 64;
+        if (buffer) {
+            return buffer;
+        } else {
+            return usbserial_buf[usbserial_active_tx_buf];
+        }
+    }
+    // buffer is the data just received
+    // send received data back to the host
+    usb_ep_start_in(USB_EP_CDC_IN, buffer, len, false);
+
+    // use the next buffer for the following receive transfer
+    usbserial_active_tx_buf = (usbserial_active_tx_buf + 1) % 4;
+
+    // specify a length and buffer to start a new transfer
+    *new_len = 64;
+    return usbserial_buf[usbserial_active_tx_buf];
+}
+#endif
