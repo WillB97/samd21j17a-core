@@ -275,31 +275,16 @@ bool usb_cb_set_interface(uint16_t interface, uint16_t new_altsetting) {
 // ------------------------------------------------------------------------------------------------------------------
 /// TODO: Add callback configuration to link this to a USBSerial C++ class
 
-uint8_t usbserial_active_rx_buf = 0;
-uint8_t usbserial_active_tx_buf = 1;
-USB_ALIGN uint8_t usbserial_buf[4][64];
-
 void usbserial_init() { // called by the SET_CONFIGURATION callback
     // configure the USB endpoints
     usb_enable_ep(USB_EP_CDC_NOTIFICATION, USB_EP_TYPE_INTERRUPT, 8);
     usb_enable_ep(USB_EP_CDC_OUT, USB_EP_TYPE_BULK, 64);
     usb_enable_ep(USB_EP_CDC_IN, USB_EP_TYPE_BULK, 64);
-
-    usbserial_active_rx_buf = 0;
-    usbserial_active_tx_buf = 0;
-
-    // enable a transfer from host to device up to size BUF_SIZE
-    // after the transfer the completion callback is called
-    usb_ep_start_out(USB_EP_CDC_OUT, usbserial_buf[0], 64);
 }
 
 // Callback, called when a USB host to device transfer completes
 void usbserial_out_completion() {
-    uint32_t len = usb_ep_out_length(USB_EP_CDC_OUT);
-    usb_ep_start_in(USB_EP_CDC_IN, usbserial_buf[usbserial_active_rx_buf], len, false);
-    usbserial_active_tx_buf = usbserial_active_rx_buf;
-    usbserial_active_rx_buf = (usbserial_active_rx_buf + 1) % 4;
-    usb_ep_start_out(USB_EP_CDC_OUT, usbserial_buf[usbserial_active_rx_buf], 64);
+    // uint32_t len = usb_ep_out_length(USB_EP_CDC_OUT);
 }
 
 // Callback, called when a USB device to host transfer completes
