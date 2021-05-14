@@ -359,6 +359,13 @@ void usbserial_run_rx_callback(uint8_t len){
     }
 }
 
+uint8_t usbserial_get_line_info() {
+    return _usbCtrlLineInfo;
+}
+uint32_t usbserial_get_baudrate() {
+    return _usbLineInfo.baud_rate;
+}
+
 // un-configure the USB endpoints
 void usbserial_disable() {
     usb_disable_ep(USB_EP_CDC_NOTIFICATION);
