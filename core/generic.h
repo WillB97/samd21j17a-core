@@ -18,6 +18,14 @@ extern "C" {
 
 #define abs(x) ((x)>0?(x):-(x))
 
+#ifndef max
+#define max(x,y) ((x>y)?(x):(y))
+#endif // max
+
+#ifndef min
+#define min(x,y) ((x<y)?(x):(y))
+#endif // min
+
 // init_clocks.c
 void init( void );
 void initSercom( void );
