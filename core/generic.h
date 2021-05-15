@@ -12,8 +12,8 @@ extern "C" {
 #define noInterrupts()  __disable_irq()
 
 // inline int abs(const int x) {return (x)>0?(x):-(x);}
-inline int min(const int x, const int y) {return (x>y)?(x):(y);}
-inline int max(const int x, const int y) {return (x<y)?(x):(y);}
+inline int min(const int x, const int y) {return (x<y)?(x):(y);}
+inline int max(const int x, const int y) {return (x>y)?(x):(y);}
 
 // init_clocks.c
 void init( void );
