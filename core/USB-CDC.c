@@ -4,8 +4,6 @@ USB_ENDPOINTS(3);
 
 // USB serial function prototypes
 void usbserial_init();
-void usbserial_run_tx_callback(uint8_t len);
-void usbserial_run_rx_callback(uint8_t len);
 
 // USB serial callbacks
 // tx_len, new_len -> new_buffer, set new_buffer to NULL to skip next transfer
@@ -298,7 +296,6 @@ void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState) {
 // #### USB serial ####
 // ------------------------------------------------------------------------------------------------------------------
 
-#define USB_SERIAL_ECHO
 #ifdef USB_SERIAL_ECHO
 uint8_t* usbserial_out_completion(uint8_t* buffer, uint8_t len, uint8_t* new_len);
 

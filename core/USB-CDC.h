@@ -33,6 +33,9 @@ void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState);
 void usbserial_set_tx_callback(uint8_t* (*new_tx_isr)(uint8_t, uint8_t*));
 void usbserial_set_rx_callback(uint8_t* (*new_rx_isr)(uint8_t*, uint8_t, uint8_t*));
 
+void usbserial_run_tx_callback(uint8_t len);
+void usbserial_run_rx_callback(uint8_t len);
+
 #ifdef __cplusplus
 }
 #endif

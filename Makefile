@@ -72,6 +72,7 @@ SOURCES= \
   $(CORE_PATH)/startup.c \
   $(CORE_PATH)/Reset.cpp \
   $(CORE_PATH)/USB-CDC.c \
+  $(CORE_PATH)/USBserial.cpp \
   $(USB_PATH)/samd/usb_samd.c \
   $(USB_PATH)/usb_requests.c \
   $(NAME)
