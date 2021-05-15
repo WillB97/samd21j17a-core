@@ -144,6 +144,8 @@ USB_ALIGN CDC_LineEncoding _usbLineInfo = {115200,0,0,8};
 bool _usbPendingNewLineInfo = false;
 USB_ALIGN uint8_t _usbCtrlLineInfo = 0x00;
 
+inline int min(const int x, const int y) {return (x>y)?(x):(y);}
+
 /// Callback for a GET_DESCRIPTOR request
 uint16_t usb_cb_get_descriptor(uint8_t type, uint8_t index, const uint8_t** ptr) {
     const void* address = NULL;

@@ -11,20 +11,9 @@ extern "C" {
 #define interrupts()    __enable_irq()
 #define noInterrupts()  __disable_irq()
 
-// undefine stdlib's abs if encountered
-#ifdef abs
-#undef abs
-#endif // abs
-
-#define abs(x) ((x)>0?(x):-(x))
-
-#ifndef max
-#define max(x,y) ((x>y)?(x):(y))
-#endif // max
-
-#ifndef min
-#define min(x,y) ((x<y)?(x):(y))
-#endif // min
+// inline int abs(const int x) {return (x)>0?(x):-(x);}
+inline int min(const int x, const int y) {return (x>y)?(x):(y);}
+inline int max(const int x, const int y) {return (x<y)?(x):(y);}
 
 // init_clocks.c
 void init( void );

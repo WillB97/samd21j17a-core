@@ -26,10 +26,6 @@ extern "C" {
 #define USB_EP_CDC_IN           0x82
 #define USB_EP_CDC_OUT          0x02
 
-#ifndef min
-#define min(x,y) ((x<y)?(x):(y))
-#endif // min
-
 uint8_t usbserial_get_line_info();
 uint32_t usbserial_get_baudrate();
 void detectSerialReset(uint32_t dataRate, uint8_t ctrlLineState);
