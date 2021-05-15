@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "generic.h"
+#include <string.h>  // Required for memcpy
 
 
 #ifdef __cplusplus
