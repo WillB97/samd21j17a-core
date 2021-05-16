@@ -95,6 +95,7 @@ SOURCES= \
 
 OBJECTS=$(addprefix $(BUILD_PATH)/, $(patsubst %.cpp,%.o,$(SOURCES:.c=.o)))
 DEPS=$(addprefix $(BUILD_PATH)/, $(SOURCES:.c=.d))
+BUILD_PATHS=$(sort $(addprefix $(BUILD_PATH)/, $(dir $(SOURCES))))
 
 LD_SCRIPT=core/linker_scripts/flash_with_bootloader.ld
 
@@ -132,8 +133,7 @@ $(BUILD_PATH)/%.o: %.cpp
 $(BUILD_PATH):
 	@echo ----------------------------------------------------------
 	@echo Creating build folder
-	-mkdir -p $(BUILD_PATH) $(BUILD_PATH)/$(CORE_PATH)
-	-mkdir -p $(BUILD_PATH)/$(USB_PATH)/samd
+	-mkdir -p $(BUILD_PATHS)
 
 print_info:
 	@echo ----------------------------------------------------------
