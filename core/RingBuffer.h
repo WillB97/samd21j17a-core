@@ -49,7 +49,7 @@ public:
 
 template <uint8_t N> RingBuffer<N>::RingBuffer() {
     // endPtr points to the element beyond the end of the buffer
-    endPtr = _buffer + N + 1;
+    endPtr = _buffer + N;
     clear();
 }
 
