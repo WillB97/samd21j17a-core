@@ -7,10 +7,15 @@
 
 #ifdef __cplusplus
 
-template <uint8_t N> class RingBuffer {
+#define BUFFER_USB_RX_ALIGN 0x1
+#define BUFFER_USB_TX_ALIGN 0x2
+
+template <uint8_t N, uint8_t align=0> class RingBuffer {
 protected:
     // Alignment required for DMA from USB
     __attribute__((__aligned__(4))) uint8_t _buffer[N];
+    // if rx alignment is needed add secondary aligned buffer for DMA to write to, set to size=1 otherwise
+    __attribute__((__aligned__(4))) uint8_t _rx_buffer[((align & BUFFER_USB_RX_ALIGN)?8:1)];
     uint8_t* volatile headPtr;  // points to the next slot to write data to
     uint8_t* volatile tailPtr;  // points to the next slot to read data from
     uint8_t* volatile endPtr;   // points to the element beyond the end of the buffer
@@ -36,7 +41,8 @@ public:
     bool isFull();
     bool isEmpty();
 
-    /// Helper methods for using the buffer with DMA, only valid if all data in the same direction uses DMA
+    /// Helper methods for using the buffer with DMA,
+    /// only valid if all data in the same direction uses DMA
     // returns pointer to the start of the writeable sub-buffer
     uint8_t* prepareDirectWrite(uint8_t* len);
     // returns pointer to the start of the readable sub-buffer
@@ -47,26 +53,26 @@ public:
 };
 
 
-template <uint8_t N> RingBuffer<N>::RingBuffer() {
+template <uint8_t N, uint8_t align> RingBuffer<N,align>::RingBuffer() {
     // endPtr points to the element beyond the end of the buffer
     endPtr = _buffer + N;
     clear();
 }
 
-template <uint8_t N> inline void RingBuffer<N>::wrap_headPtr() {
+template <uint8_t N, uint8_t align> inline void RingBuffer<N,align>::wrap_headPtr() {
     if (headPtr >= endPtr) {
         // head moved off the end of the buffer, reset it to the beginning
         headPtr = _buffer;
     }
 }
-template <uint8_t N> inline void RingBuffer<N>::wrap_tailPtr() {
+template <uint8_t N, uint8_t align> inline void RingBuffer<N,align>::wrap_tailPtr() {
     if (tailPtr >= endPtr) {
         // tail moved off the end of the buffer, reset it to the beginning
         tailPtr = _buffer;
     }
 }
 
-template <uint8_t N> uint8_t RingBuffer<N>::store(const char* buffer, uint8_t len) {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::store(const char* buffer, uint8_t len) {
     uint8_t total_transfered = 0;
 
     pauseInterrupts();
@@ -95,7 +101,7 @@ template <uint8_t N> uint8_t RingBuffer<N>::store(const char* buffer, uint8_t le
     resumeInterrupts();
     return total_transfered;
 }
-template <uint8_t N> uint8_t RingBuffer<N>::store(const uint8_t c) {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::store(const uint8_t c) {
     pauseInterrupts();
 
     if (isFull()) {
@@ -111,7 +117,7 @@ template <uint8_t N> uint8_t RingBuffer<N>::store(const uint8_t c) {
     return 1;
 }
 
-template <uint8_t N> uint8_t RingBuffer<N>::read_char() {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::read_char() {
     pauseInterrupts();
 
     if (isEmpty()) {
@@ -127,7 +133,7 @@ template <uint8_t N> uint8_t RingBuffer<N>::read_char() {
     resumeInterrupts();
     return c;
 }
-template <uint8_t N> uint8_t RingBuffer<N>::read(uint8_t* buffer, uint8_t max_len) {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::read(uint8_t* buffer, uint8_t max_len) {
     uint8_t total_transfered = 0;
 
     pauseInterrupts();
@@ -157,14 +163,14 @@ template <uint8_t N> uint8_t RingBuffer<N>::read(uint8_t* buffer, uint8_t max_le
     return total_transfered;
 }
 
-template <uint8_t N> void RingBuffer<N>::clear() {
+template <uint8_t N, uint8_t align> void RingBuffer<N,align>::clear() {
     pauseInterrupts();
     headPtr = _buffer;
     tailPtr = _buffer;
     resumeInterrupts();
 }
 
-template <uint8_t N> uint8_t RingBuffer<N>::usedSpace() {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::usedSpace() {
     int16_t ptr_diff = headPtr - tailPtr;
 
     // account for wrapping at end pointer
@@ -173,37 +179,72 @@ template <uint8_t N> uint8_t RingBuffer<N>::usedSpace() {
     }
     return (uint8_t)(ptr_diff & 0xFF);
 }
-template <uint8_t N> uint8_t RingBuffer<N>::availableSpace() {
+template <uint8_t N, uint8_t align> uint8_t RingBuffer<N,align>::availableSpace() {
     // at full the pointers are adjacent so 1 slot is always unusable
     return (N - usedSpace() - 1);
 }
 
-template <uint8_t N> bool RingBuffer<N>::isFull() {
+template <uint8_t N, uint8_t align> bool RingBuffer<N,align>::isFull() {
     return (!availableSpace());
 }
-template <uint8_t N> bool RingBuffer<N>::isEmpty() {
+template <uint8_t N, uint8_t align> bool RingBuffer<N,align>::isEmpty() {
     return (headPtr == tailPtr);
 }
 
 // these functions are not protected against interrupts since they should only be used by a single interrupt
-template <uint8_t N> uint8_t* RingBuffer<N>::prepareDirectWrite(uint8_t* len) {
+template <uint8_t N, uint8_t align> uint8_t* RingBuffer<N,align>::prepareDirectWrite(uint8_t* len) {
     // calculate maximum contiguous write length
-    *len = min((endPtr - headPtr), availableSpace());
+    uint8_t max_len = min((endPtr - headPtr), availableSpace());
+
+    // if the head is already aligned nothing changes
+    if ((align & BUFFER_USB_RX_ALIGN) && (reinterpret_cast<uintptr_t>(headPtr) & 0x3)) {
+        // when the head is unaligned we use an intermediate buffer so the DMA gets an aligned buffer
+        *len = min(max_len, 8);
+
+        return _rx_buffer;
+    }
+
+    *len = max_len;
 
     return headPtr;
 }
-template <uint8_t N> uint8_t* RingBuffer<N>::prepareDirectRead(uint8_t* len) {
+template <uint8_t N, uint8_t align> uint8_t* RingBuffer<N,align>::prepareDirectRead(uint8_t* len) {
     // calculate maximum contiguous read length
-    *len = min((endPtr - tailPtr), usedSpace());
+    uint8_t max_len = min((endPtr - tailPtr), usedSpace());
+
+    if (align & BUFFER_USB_TX_ALIGN) {
+        if (max_len < 4) {  // if there are less than 4 bytes to send, extra steps are needed
+            // push headPtr to the next alignment boundary
+            headPtr += 4 - max_len;
+            wrap_headPtr();
+            *len = max_len;
+        } else {
+            // restrict length to a multiple of 4 so that all transfers begin on a 32-bit boundary
+            *len = (max_len & ~0x3);
+        }
+    } else {
+        *len = max_len;
+    }
 
     return tailPtr;
 }
 
-template <uint8_t N> void RingBuffer<N>::completeDirectWrite(uint8_t len) {
+template <uint8_t N, uint8_t align> void RingBuffer<N,align>::completeDirectWrite(uint8_t len) {
+    // if the head was aligned we wrote directly to the buffer
+    if ((align & BUFFER_USB_RX_ALIGN) && (reinterpret_cast<uintptr_t>(headPtr) & 0x3)) {
+        // move data from the intermediate buffer
+        memcpy(headPtr, _rx_buffer, len);
+    }
+
     headPtr += len;
     wrap_headPtr();
 }
-template <uint8_t N> void RingBuffer<N>::completeDirectRead(uint8_t len) {
+template <uint8_t N, uint8_t align> void RingBuffer<N,align>::completeDirectRead(uint8_t len) {
+    if ((align & BUFFER_USB_TX_ALIGN) && (len & 0x3)) {
+        // round up to the next alignment boundary
+        len = (len & ~0x3) + 4;
+    }
+
     tailPtr += len;
     wrap_tailPtr();
 }

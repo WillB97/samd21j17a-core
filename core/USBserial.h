@@ -36,8 +36,8 @@ public:
     uint8_t* _send_data_cb(uint8_t tx_len, uint8_t* new_len);
 
 private:
-    RingBuffer<USB_SERIAL_BUFFER_LENGTH> tx_buffer;
-    RingBuffer<USB_SERIAL_BUFFER_LENGTH> rx_buffer;
+    RingBuffer<USB_SERIAL_BUFFER_LENGTH, BUFFER_USB_TX_ALIGN> tx_buffer;
+    RingBuffer<USB_SERIAL_BUFFER_LENGTH, BUFFER_USB_RX_ALIGN> rx_buffer;
     bool receiveDMAInProgress = false;
     bool transmitDMAInProgress = false;
 
