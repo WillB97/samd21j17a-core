@@ -1,5 +1,6 @@
 # include per-user options
 include config.mk
+SHELL:=/bin/bash
 
 # -----------------------------------------------------------------------------
 # Paths
@@ -146,12 +147,16 @@ print_info:
 usb_reset:
 	@echo ----------------------------------------------------------
 	@echo Performing force reset over serial on $(SERIAL_PORT)
-	-$(PYTHON) reset.py $(SERIAL_PORT)
+	$(PYTHON) reset.py $(SERIAL_PORT)
 
 usb_flash:
 	@echo ----------------------------------------------------------
 	@echo Flashing over USB
 	$(BOSSAC) $(BOSSAC_OFFSET) $(BOSSAC_ARGS) $(BIN)
+
+SCRIPTS:
+%.py: SCRIPTS
+	$(PYTHON) $@ $(SERIAL_PORT)
 
 clean:
 	@echo ----------------------------------------------------------
