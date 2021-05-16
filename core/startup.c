@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 
+#include "usb.h"
+
 /**
  * Temporary measure to remove variant.h
  */
@@ -324,4 +326,15 @@ void SystemInit( void )
     while ( 1 ) ;
   }
   NVIC_SetPriority (SysTick_IRQn,  (1 << __NVIC_PRIO_BITS) - 2);  /* set Priority for Systick Interrupt (2nd lowest) */
+
+  /*
+   * 11) Initialise USB serial port
+   */
+#ifdef USBCON
+  PORT->Group[0].PMUX[PIN_PA24G_USB_DM/2].reg = PORT_PMUX_PMUXE_G | PORT_PMUX_PMUXO_G;
+  PORT->Group[0].PINCFG[PIN_PA24G_USB_DM].bit.PMUXEN = 1;
+  PORT->Group[0].PINCFG[PIN_PA25G_USB_DP].bit.PMUXEN = 1;
+  usb_init();
+  usb_attach();
+#endif
 }

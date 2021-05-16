@@ -1,3 +1,7 @@
+# include per-user options
+include config.mk
+SHELL:=/bin/bash
+
 # -----------------------------------------------------------------------------
 # Paths
 ifeq ($(OS),Windows_NT)
@@ -12,6 +16,7 @@ ifeq ($(OS),Windows_NT)
     RM=rm
     SEP=\\
   endif
+  PYTHON?=python
 else
   UNAME_S := $(shell uname -s)
 
@@ -26,9 +31,11 @@ else
     RM=rm
     SEP=/
   endif
+  PYTHON?=python3
 endif
 
 MODULE_PATH?=$(abspath $(CURDIR)/thirdparty)
+USB_PATH?=$(shell realpath --relative-to $(CURDIR) $(MODULE_PATH)/usb)
 CORE_PATH?=core
 BUILD_PATH?=$(abspath $(CURDIR)/build)
 
@@ -42,11 +49,12 @@ CXX=$(ARM_GCC_PATH)g++
 OBJCOPY=$(ARM_GCC_PATH)objcopy
 NM=$(ARM_GCC_PATH)nm
 SIZE=$(ARM_GCC_PATH)size
+BOSSAC?=bossac
 
 # -----------------------------------------------------------------------------
 # Compiler options
 CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__
-CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='Arduino LLC' -DUSB_PRODUCT='Arduino Zero'
+CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='"Arduino LLC"' -DUSB_PRODUCT='"Arduino Zero"'
 CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections
 CXXFLAGS+=-fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
 CFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu11 -ffunction-sections -fdata-sections -nostdlib --param max-inline-insns-single=500 -MMD
@@ -55,7 +63,7 @@ ELF=$(_NAME).elf
 BIN=$(_NAME).bin
 HEX=$(_NAME).hex
 
-INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(CORE_PATH)"
+INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(USB_PATH)" -I"$(CORE_PATH)"
 
 # -----------------------------------------------------------------------------
 # Linker options
@@ -64,12 +72,25 @@ LDFLAGS+=-Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbol
 LDFLAGS+=-L$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Lib/GCC/ -larm_cortexM0l_math
 
 # -----------------------------------------------------------------------------
+# Programmer options
+BOSSAC_ARGS?=--info --erase --write --verify --reset
+BOSSA_VERSION=$(shell $(BOSSAC) --help | awk '/Version/{print $$NF}')
+
+ifeq ($(shell [[ ! "$(BOSSA_VERSION)" < "1.9.0" ]]; echo $$?),0)
+  BOSSAC_OFFSET = -o 0x2000
+endif
+
+# -----------------------------------------------------------------------------
 # Source files and objects
 SOURCES= \
   $(CORE_PATH)/cortex_handlers.c \
   $(CORE_PATH)/delay.c \
   $(CORE_PATH)/startup.c \
   $(CORE_PATH)/Reset.cpp \
+  $(CORE_PATH)/USB-CDC.c \
+  $(CORE_PATH)/USBserial.cpp \
+  $(USB_PATH)/samd/usb_samd.c \
+  $(USB_PATH)/usb_requests.c \
   $(NAME)
 
 OBJECTS=$(addprefix $(BUILD_PATH)/, $(patsubst %.cpp,%.o,$(SOURCES:.c=.o)))
@@ -111,15 +132,31 @@ $(BUILD_PATH)/%.o: %.cpp
 $(BUILD_PATH):
 	@echo ----------------------------------------------------------
 	@echo Creating build folder
-	-mkdir $(BUILD_PATH)
-	-mkdir $(BUILD_PATH)/$(CORE_PATH)
+	-mkdir -p $(BUILD_PATH) $(BUILD_PATH)/$(CORE_PATH)
+	-mkdir -p $(BUILD_PATH)/$(USB_PATH)/samd
 
 print_info:
 	@echo ----------------------------------------------------------
-	@echo Compiling bootloader using
+	@echo Compiling using
 	@echo BASE   PATH = $(MODULE_PATH)
 	@echo GCC    PATH = $(ARM_GCC_PATH)
 	@echo SOURCE LIST = $(SOURCES)
+	@echo BOSSAC PATH = $(BOSSAC)
+	@echo BOSSAC VERSION = $(BOSSA_VERSION)
+
+usb_reset:
+	@echo ----------------------------------------------------------
+	@echo Performing force reset over serial on $(SERIAL_PORT)
+	$(PYTHON) reset.py $(SERIAL_PORT)
+
+usb_flash:
+	@echo ----------------------------------------------------------
+	@echo Flashing over USB
+	$(BOSSAC) $(BOSSAC_OFFSET) $(BOSSAC_ARGS) $(BIN)
+
+SCRIPTS:
+%.py: SCRIPTS
+	$(PYTHON) $@ $(SERIAL_PORT)
 
 clean:
 	@echo ----------------------------------------------------------
@@ -128,4 +165,4 @@ clean:
 	-$(RM) $(HEX)
 	-$(RM) -r $(BUILD_PATH)
 
-.phony: print_info $(BUILD_PATH)
+.phony: print_info usb_reset usb_flash $(BUILD_PATH)
