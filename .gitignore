@@ -2,3 +2,4 @@ build/
 core_tmp/
 *.bin
 *.hex
+config.mk
