@@ -1,5 +1,7 @@
 #include "USBserial.h"
 
+#ifndef USB_RESET_ONLY
+
 USBserial::USBserial() {
     usbserial_set_tx_callback(usbserial_send_data_cb);
     usbserial_set_rx_callback(usbserial_receive_data_cb);
@@ -134,3 +136,4 @@ uint8_t* usbserial_send_data_cb(uint8_t tx_len, uint8_t* new_len) {
     return usbserial._send_data_cb(tx_len, new_len);
 }
 
+#endif
