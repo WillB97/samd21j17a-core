@@ -41,6 +41,8 @@ BUILD_PATH?=$(abspath $(CURDIR)/build)
 
 NAME?=main.cpp
 _NAME?=$(basename $(NAME))
+TOTAL_FLASH?=$$((120*1024))  # 8kB lost to bootloader
+TOTAL_RAM?=$$((16*1024))
 
 # -----------------------------------------------------------------------------
 # Tools
@@ -106,7 +108,14 @@ $(ELF): Makefile $(BUILD_PATH) $(OBJECTS)
 	@echo Creating ELF binary
 	"$(CXX)" -L. -L$(BUILD_PATH) $(LDFLAGS) -Os -Wl,--gc-sections -save-temps -T$(LD_SCRIPT) -Wl,-Map,"$(BUILD_PATH)/$(_NAME).map" -o "$(BUILD_PATH)/$(ELF)" -Wl,--start-group $(OBJECTS) -lm -Wl,--end-group
 	"$(NM)" "$(BUILD_PATH)/$(ELF)" >"$(BUILD_PATH)/$(_NAME)_symbols.txt"
-	"$(SIZE)" --format=sysv -t -x $(BUILD_PATH)/$(ELF)
+	@"$(SIZE)" $(BUILD_PATH)/$(ELF) | awk -v maxflash=$(TOTAL_FLASH) -v maxram=$(TOTAL_RAM) '(NR==2){ \
+		flash=$$1+$$2; \
+		ram=$$2+$$3; \
+		print $$6; \
+		printf "Flash used: %d / %d (%0.2f%%)\n", flash, maxflash, flash / maxflash * 100; \
+		printf "RAM used: %d / %d (%0.2f%%)\n", ram, maxram, ram / maxram * 100 \
+	}'
+
 
 $(BIN): $(ELF)
 	@echo ----------------------------------------------------------
