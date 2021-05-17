@@ -4,7 +4,12 @@ USBserial::USBserial() {
     usbserial_set_tx_callback(usbserial_send_data_cb);
     usbserial_set_rx_callback(usbserial_receive_data_cb);
 }
-USBserial::~USBserial() {
+/// Having a destructor adds ~400 bytes to the BSS section,
+/// since this is defined globally this is not really needed
+// USBserial::~USBserial() {
+//     _del();
+// }
+void USBserial::_del() {
     // remove callbacks
     usbserial_set_tx_callback(NULL);
     usbserial_set_rx_callback(NULL);

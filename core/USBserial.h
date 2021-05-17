@@ -9,7 +9,8 @@
 class USBserial {
 public:
     USBserial();
-    ~USBserial();
+    // ~USBserial();
+    void _del();
 
     // returns bytes added to buffer
     uint8_t write(const char* data, uint8_t len);
