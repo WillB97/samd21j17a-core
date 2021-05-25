@@ -22,7 +22,7 @@ USB_ALIGN const USB_DeviceDescriptor device_descriptor = {
     .bDescriptorType = USB_DTYPE_Device,
 
     .bcdUSB                 = 0x0200,  // USB version 2.0
-    .bDeviceClass           = 0,
+    .bDeviceClass           = CDC_INTERFACE_CLASS,
     .bDeviceSubClass        = USB_CSCP_NoDeviceSubclass,
     .bDeviceProtocol        = USB_CSCP_NoDeviceProtocol,
 
@@ -85,7 +85,7 @@ USB_ALIGN const ConfigDesc configuration_descriptor = {
         .bLength = sizeof(CDC_FunctionalACMDescriptor),
         .bDescriptorType = USB_DTYPE_CSInterface,
         .bDescriptorSubtype = CDC_SUBTYPE_ACM,
-        .bmCapabilities = 0x06,  // supports setting line coding, arduino seems to use 6
+        .bmCapabilities = 0x06,  // supports setting line coding, and receiving break
     },
     .CDC_functional_union = {
         .bLength = sizeof(CDC_FunctionalUnionDescriptor),
