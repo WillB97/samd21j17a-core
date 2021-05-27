@@ -7,3 +7,7 @@
 [submodule "thirdparty/CMSIS-Atmel"]
 	path = thirdparty/CMSIS-Atmel
 	url = https://github.com/adafruit/ArduinoModule-CMSIS-Atmel.git
+[submodule "bootloader"]
+	path = bootloader
+	url = https://github.com/WillB97/samd_bootloader.git
+	branch = master
