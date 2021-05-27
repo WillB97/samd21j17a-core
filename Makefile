@@ -168,6 +168,11 @@ init:
 	@echo Initialising submodules
 	git submodule update --init
 
+boot:
+	@echo ----------------------------------------------------------
+	@echo Building bootloader
+	CHIPNAME=samd21j17 MODULE_PATH=$(MODULE_PATH) $(MAKE) -C bootloader all size clean
+
 SCRIPTS:
 %.py: SCRIPTS
 	$(PYTHON) $@ $(SERIAL_PORT)
@@ -179,4 +184,4 @@ clean:
 	-$(RM) $(HEX)
 	-$(RM) -r $(BUILD_PATH)
 
-.phony: print_info usb_reset usb_flash init $(BUILD_PATH)
+.phony: print_info usb_reset usb_flash init boot $(BUILD_PATH)
