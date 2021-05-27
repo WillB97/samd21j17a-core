@@ -65,7 +65,7 @@ ELF=$(_NAME).elf
 BIN=$(_NAME).bin
 HEX=$(_NAME).hex
 
-INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(USB_PATH)" -I"$(CORE_PATH)"
+INCLUDES=-I"$(MODULE_PATH)/CMSIS-4.5.0/CMSIS/Include/" -I"$(MODULE_PATH)/CMSIS-Atmel/CMSIS-Atmel/CMSIS/Device/ATMEL/" -I"$(USB_PATH)" -I"$(CORE_PATH)"
 
 # -----------------------------------------------------------------------------
 # Linker options
@@ -163,6 +163,11 @@ usb_flash:
 	@echo Flashing over USB
 	$(BOSSAC) $(BOSSAC_OFFSET) $(BOSSAC_ARGS) $(BIN)
 
+init:
+	@echo ----------------------------------------------------------
+	@echo Initialising submodules
+	git submodule update --init
+
 SCRIPTS:
 %.py: SCRIPTS
 	$(PYTHON) $@ $(SERIAL_PORT)
@@ -174,4 +179,4 @@ clean:
 	-$(RM) $(HEX)
 	-$(RM) -r $(BUILD_PATH)
 
-.phony: print_info usb_reset usb_flash $(BUILD_PATH)
+.phony: print_info usb_reset usb_flash init $(BUILD_PATH)
