@@ -23,18 +23,11 @@ int main( void ) {
     // turn PA17 on
     PORT->Group[PORTA].OUTSET.reg = PORT_PA17;
 
-    usbserial.write('p');  // send single char
-    usbserial.write('q');
-    usbserial.write('z');
+    usbserial.write("Serial No", 9);
+    usbserial.write(':');
+    usbserial.write(' ');
     delay(1000);  // pause to send this data in a separate transfer
-    usbserial.write('a');
-    usbserial.write('b');
-    usbserial.write('c');
-    usbserial.write("ABC", 3);  // send string
-    usbserial.write("abcd", 3);  // send string
-    delay(100);
-    usbserial.write("wxyz", 3);  // send string
-    usbserial.write("WXYZ", 3);  // send string
+    usbserial.write(BOOT_SERIAL_NUMBER, strlen(BOOT_SERIAL_NUMBER));
 
     // turn PA17 off
     PORT->Group[PORTA].OUTCLR.reg = PORT_PA17;

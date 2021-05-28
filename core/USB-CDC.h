@@ -7,6 +7,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "generic.h"
 #include "usb.h"
 #include "samd/usb_samd.h"
 #include "class/cdc/cdc_standard.h"

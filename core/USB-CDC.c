@@ -142,8 +142,6 @@ USB_ALIGN CDC_LineEncoding _usbLineInfo = {115200,0,0,8};
 bool _usbPendingNewLineInfo = false;
 USB_ALIGN uint8_t _usbCtrlLineInfo = 0x00;
 
-inline int min(const int x, const int y) {return (x<y)?(x):(y);}
-
 /// Callback for a GET_DESCRIPTOR request
 uint16_t usb_cb_get_descriptor(uint8_t type, uint8_t index, const uint8_t** ptr) {
     const void* address = NULL;
@@ -170,7 +168,7 @@ uint16_t usb_cb_get_descriptor(uint8_t type, uint8_t index, const uint8_t** ptr)
                     address = usb_string_to_descriptor(USB_PRODUCT);
                     break;
                 case 0x03:
-                    address = samd_serial_number_string_descriptor();
+                    address = usb_string_to_descriptor((char*)BOOT_SERIAL_NUMBER);  // this should be const but the argument isn't
                     break;
             }
             size = (((USB_StringDescriptor*)address))->bLength;

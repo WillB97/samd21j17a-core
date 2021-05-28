@@ -10,6 +10,8 @@ extern "C" {
 
 #define interrupts()    __enable_irq()
 #define noInterrupts()  __disable_irq()
+// This string is in flash and part of the bootloader
+#define BOOT_SERIAL_NUMBER ((const char *)0x1FC0)
 
 // inline int abs(const int x) {return (x)>0?(x):-(x);}
 inline int min(const int x, const int y) {return (x<y)?(x):(y);}
