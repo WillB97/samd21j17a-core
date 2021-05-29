@@ -44,6 +44,9 @@ _NAME?=$(basename $(NAME))
 TOTAL_FLASH?=$$((120*1024))  # 8kB lost to bootloader
 TOTAL_RAM?=$$((16*1024))
 
+CHIPNAME?=samd21g18
+CHIPNAME_U=$(shell echo $(CHIPNAME)|tr 'a-z' 'A-Z')
+
 # -----------------------------------------------------------------------------
 # Tools
 CC=$(ARM_GCC_PATH)gcc
@@ -55,7 +58,7 @@ BOSSAC?=bossac
 
 # -----------------------------------------------------------------------------
 # Compiler options
-CFLAGS_EXTRA=-DF_CPU=48000000L -D__SAMD21G18A__
+CFLAGS_EXTRA=-DF_CPU=48000000L -D__$(CHIPNAME_U)A__
 CFLAGS_EXTRA+=-DUSB_VID=0x2341 -DUSB_PID=0x804d -DUSBCON -DUSB_MANUFACTURER='"Arduino LLC"' -DUSB_PRODUCT='"Arduino Zero"'
 CXXFLAGS=-mcpu=cortex-m0plus -mthumb -Wall -c -g -Os -std=gnu++11 -ffunction-sections -fdata-sections
 CXXFLAGS+=-fno-threadsafe-statics -nostdlib --param max-inline-insns-single=500 -fno-rtti -fno-exceptions -MMD
@@ -171,7 +174,7 @@ init:
 boot:
 	@echo ----------------------------------------------------------
 	@echo Building bootloader
-	CHIPNAME=samd21j17 MODULE_PATH=$(MODULE_PATH) $(MAKE) -C bootloader all size clean
+	CHIPNAME=$(CHIPNAME) MODULE_PATH=$(MODULE_PATH) $(MAKE) -C bootloader all size clean
 
 SCRIPTS:
 %.py: SCRIPTS
