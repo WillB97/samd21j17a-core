@@ -85,6 +85,11 @@ ifeq ($(shell [[ ! "$(BOSSA_VERSION)" < "1.9.0" ]]; echo $$?),0)
   BOSSAC_OFFSET = -o 0x2000
 endif
 
+PROGRAMMER?=jlink
+BOOT_BIN?=bootloader/out/$(CHIPNAME)_sam_ba
+BOOT_SERNUM_BIN?=bootloader/out/boot_sernum.bin
+ADALINK_ARGS=samd21 -p $(PROGRAMMER) -V $(CHIPNAME)
+
 # -----------------------------------------------------------------------------
 # Source files and objects
 SOURCES= \
@@ -176,6 +181,19 @@ boot:
 	@echo Building bootloader
 	CHIPNAME=$(CHIPNAME) MODULE_PATH=$(MODULE_PATH) $(MAKE) -C bootloader all size clean
 
+flash_all:
+	@echo ----------------------------------------------------------
+	@echo Flashing bootloader and program using $(PROGRAMMER)
+ifeq ($(SERNUM),)  # Don't insert a blank serial number
+	$(PYTHON) thirdparty/adalink/adalink.py $(ADALINK_ARGS) \
+		-b $(BOOT_BIN) 0x0000 -b $(BIN) 0x2000
+else
+	$(PYTHON) bootloader/insert_serial.py $(SERNUM) $(BOOT_BIN) $(BOOT_SERNUM_BIN)
+	$(PYTHON) thirdparty/adalink/adalink.py $(ADALINK_ARGS) \
+		-b $(BOOT_SERNUM_BIN) 0x0000 -b $(BIN) 0x2000
+	-$(RM) $(BOOT_SERNUM_BIN)
+endif
+
 SCRIPTS:
 %.py: SCRIPTS
 	$(PYTHON) $@ $(SERIAL_PORT)
@@ -187,4 +205,4 @@ clean:
 	-$(RM) $(HEX)
 	-$(RM) -r $(BUILD_PATH)
 
-.phony: print_info usb_reset usb_flash init boot $(BUILD_PATH)
+.phony: print_info usb_reset usb_flash init boot flash_all $(BUILD_PATH)

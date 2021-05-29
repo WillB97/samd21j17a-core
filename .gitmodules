@@ -11,3 +11,7 @@
 	path = bootloader
 	url = https://github.com/WillB97/samd_bootloader.git
 	branch = master
+[submodule "thirdparty/adalink"]
+	path = thirdparty/adalink
+	url = https://github.com/WillB97/Adafruit_Adalink.git
+	branch = standalone
